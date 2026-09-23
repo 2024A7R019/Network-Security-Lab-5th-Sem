@@ -1,12 +1,12 @@
 # Experiment 4: X.509 Self-Signed Digital Certificate
 
-## Aim
+# Aim
 
 To generate, inspect, and verify a self-signed X.509 digital certificate using OpenSSL and to validate the certificate, its extensions, and its corresponding private key.
 
 ---
 
-## Objective
+# Objective
 
 The objectives of this experiment are:
 
@@ -22,7 +22,7 @@ The objectives of this experiment are:
 
 ---
 
-## Requirements
+# Requirements
 
 - Kali Linux
 - OpenSSL
@@ -32,7 +32,7 @@ The objectives of this experiment are:
 
 ---
 
-## Theory
+# Theory
 
 ### X.509 Digital Certificate
 
