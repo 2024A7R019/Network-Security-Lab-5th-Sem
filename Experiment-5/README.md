@@ -26,19 +26,19 @@ To use Wireshark to observe and dissect the TLS handshake process during HTTPS c
 
 Wireshark was opened, and the active network interface was selected. HTTPS traffic was captured using the display filter `tcp port 443` while accessing `https://www.wireshark.org/`. The capture was saved in `.pcapng` format.
 
-Capture files: [Original TLS Capture](outputs/Exp5_tls_handshake.pcapng) | [Decrypted TLS Capture](outputs/Exp5_tls_decrypted.pcapng)
+Capture files: [Original TLS Capture](Outputs/Exp5_tls_handshake.pcapng) | [Decrypted TLS Capture](Outputs/Exp5_tls_decrypted.pcapng)
 
 ### Step 2: Analyze the ClientHello Message
 
 The display filter `tls.handshake.type == 1` was applied to locate ClientHello packets. The supported TLS versions, offered cipher suites, server name, and key-share information were examined.
 
-![ClientHello message](outputs/clienthello.png)
+![ClientHello message](Outputs/clienthello.png)
 
 ### Step 3: Analyze the ServerHello Message
 
 The filter `tls.handshake.type == 2` was applied to inspect ServerHello packets. The negotiated TLS version, selected cipher suite, and key-share information were observed.
 
-![ServerHello message](outputs/serverhello.png)
+![ServerHello message](Outputs/serverhello.png)
 
 ### Step 4: Configure TLS Key Logging and Decrypt the Session
 
@@ -48,13 +48,13 @@ The browser was configured to save TLS session secrets in a key log file, and Wi
 
 The decrypted TLS traffic was examined to identify handshake messages, including EncryptedExtensions, Certificate, CertificateVerify, and Finished.
 
-![Decrypted TLS handshake](outputs/decrypted.png)
+![Decrypted TLS handshake](Outputs/decrypted.png)
 
 ### Step 6: Inspect the Server Certificate
 
 The Certificate message was expanded to examine the certificate's subject, issuer, validity period, Subject Alternative Name (SAN), public-key information, and signature algorithm.
 
-![TLS certificate details](outputs/certificate.png)
+![TLS certificate details](Outputs/certificate.png)
 
 ### Step 7: Compare TLS Handshakes
 
