@@ -97,7 +97,7 @@ The following command was used to verify that SSH was listening on TCP port 22:
 
 The server's username, hostname, IP address, and SSH host-key fingerprint were also examined during the setup.
 
-The Ubuntu-side commands are documented in [`server_commands.sh`](Codes/server_commands.sh).
+The Ubuntu-side commands are documented in [`server_commands.sh`](Codes/Server_commands.sh).
 
 ![Step 2: Install and Configure the SSH Server](Outputs/ss2.png)
 
