@@ -62,3 +62,6 @@ ssh-add ~/.ssh/id_ed25519
 
 # Step 12: Connect to the Ubuntu server again
 ssh tanish-sharma@192.168.125.129
+
+# Exit the SSH session and return to Kali Linux
+exit
