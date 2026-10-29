@@ -15,3 +15,4 @@ This repository contains the laboratory work for the Network Security Lab.
 4. [Experiment 4: X.509 Self-Signed Digital Certificate](Experiment-4/)
 5. [Experiment 5: Capture and Analyze TLS Handshake using Wireshark](Experiment-5/)
 6. [Experiment 6: Establish Secure Remote Login Using SSH](Experiment-6/)
+7. [Experiment 7: Analyze WPA2 Wireless Security and Capture Handshake with Wireshark](Experiment-7/)
