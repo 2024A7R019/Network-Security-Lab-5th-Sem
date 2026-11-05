@@ -16,3 +16,4 @@ This repository contains the laboratory work for the Network Security Lab.
 5. [Experiment 5: Capture and Analyze TLS Handshake using Wireshark](Experiment-5/)
 6. [Experiment 6: Establish Secure Remote Login Using SSH](Experiment-6/)
 7. [Experiment 7: Analyze WPA2 Wireless Security and Capture Handshake with Wireshark](Experiment-7/)
+8. [Experiment 8: Send and Receive PGP Encrypted Email Using Thunderbird](Experiment-8/)
