@@ -17,3 +17,4 @@ This repository contains the laboratory work for the Network Security Lab.
 6. [Experiment 6: Establish Secure Remote Login Using SSH](Experiment-6/)
 7. [Experiment 7: Analyze WPA2 Wireless Security and Capture Handshake with Wireshark](Experiment-7/)
 8. [Experiment 8: Send and Receive PGP Encrypted Email Using Thunderbird](Experiment-8/)
+9. [Experiment 9: Set Up an IPsec VPN in Tunnel Mode Using strongSwan](Experiment-9/)
