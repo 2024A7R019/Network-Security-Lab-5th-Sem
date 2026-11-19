@@ -1,281 +1,293 @@
+#!/bin/bash
+
 # EXPERIMENT 9: SET UP AN IPsec VPN IN TUNNEL MODE USING STRONGSWAN
 #
-# This file contains the commands used to configure, establish,
-# and verify an IKEv2 IPsec VPN tunnel between two Kali Linux gateways.
+# This file contains the commands used during the experiment.
+# Run the commands on the specified gateway wherever indicated.
 #
-# Gateway A:
-# Outer IP: 192.168.229.128
-# Inner IP: 10.10.1.1/32
-# Identity: gw-a
+# Gateway A Outer IP: 192.168.229.128
+# Gateway B Outer IP: 192.168.229.129
 #
-# Gateway B:
-# Outer IP: 192.168.229.129
-# Inner IP: 10.20.1.1/32
-# Identity: gw-b
+# Gateway A Inner IP: 10.10.1.1/32
+# Gateway B Inner IP: 10.20.1.1/32
 #
 # IMPORTANT:
-# Run Gateway A commands on Gateway A and Gateway B commands on Gateway B.
-# Replace placeholders with the actual lab values where required.
-# Never store or publish the actual Pre-Shared Key (PSK).
+# - Replace the PSK placeholder with the same generated key on both gateways.
+# - Never upload or share the actual PSK.
+# - Commands are organized by step; do not execute the entire file at once.
 
+# ------------------------------------------------------------
+# 1. CHECK NETWORK CONNECTIVITY
+# Run on both gateways
+# ------------------------------------------------------------
 
-# ============================================================
-# 1. NETWORK CONFIGURATION AND CONNECTIVITY
-# ============================================================
-
-# Display network interfaces and assigned IP addresses on both gateways.
+# Display network interfaces and IP addresses.
 ip -br address
 
-# Gateway A: Verify connectivity with Gateway B.
+# Test connectivity to the other gateway.
+# Run on Gateway A:
 ping -c 3 192.168.229.129
 
-# Gateway B: Verify connectivity with Gateway A.
+# Run on Gateway B:
 ping -c 3 192.168.229.128
 
-# Check the route used to reach the other gateway.
-# Gateway A:
+# Check the route to the other gateway.
+# Run on Gateway A:
 ip route get 192.168.229.129
 
-# Gateway B:
+# Run on Gateway B:
 ip route get 192.168.229.128
 
 
-# ============================================================
+# ------------------------------------------------------------
 # 2. INSTALL AND START STRONGSWAN
-# ============================================================
+# Run on both gateways
+# ------------------------------------------------------------
 
-# Run the following commands on both gateways.
-
-# Update the package repository information.
+# Update package information.
 sudo apt update
 
-# Install the modern strongSwan service, swanctl utility,
-# and tcpdump packet capture utility.
+# Install strongSwan, swanctl and tcpdump.
 sudo apt install charon-systemd strongswan-swanctl tcpdump
 
 # Enable and start the strongSwan service.
 sudo systemctl enable --now strongswan
 
-# Check whether the strongSwan service is running.
+# Check the service status.
 sudo systemctl status strongswan --no-pager
 
-# Display the installed swanctl version.
+# Verify the swanctl version.
 sudo swanctl --version
 
-# Verify communication with the strongSwan daemon.
+# Verify the running daemon version.
 sudo swanctl --version --daemon
 
 
-# ============================================================
-# 3. ASSIGN INNER TUNNEL IP ADDRESSES
-# ============================================================
+# ------------------------------------------------------------
+# 3. CONFIGURE INNER LOOPBACK ADDRESSES
+# ------------------------------------------------------------
 
-# Gateway A: Assign the inner tunnel address to the loopback interface.
+# Run on Gateway A:
 sudo ip address add 10.10.1.1/32 dev lo
 
-# Gateway B: Assign the inner tunnel address to the loopback interface.
+# Run on Gateway B:
 sudo ip address add 10.20.1.1/32 dev lo
 
-# Verify the assigned loopback addresses.
+# Verify the loopback interface on both gateways.
 ip -br address show dev lo
 
 
-# ============================================================
+# ------------------------------------------------------------
 # 4. INSPECT FIREWALL CONFIGURATION
-# ============================================================
+# Run on both gateways
+# ------------------------------------------------------------
 
-# Run on both gateways before changing firewall rules.
-
-# Check the UFW firewall status.
+# Check UFW firewall status.
 sudo ufw status
 
-# Display the existing nftables ruleset.
+# Inspect nftables rules.
 sudo nft list ruleset
 
-# IPsec requires UDP port 500 for IKE,
-# UDP port 4500 for NAT traversal when applicable,
-# and IP protocol 50 for native ESP traffic.
-# Inspect existing rules before making any changes.
+# IPsec may require:
+# UDP port 500  - IKE
+# UDP port 4500 - NAT Traversal
+# IP protocol 50 - ESP
 
 
-# ============================================================
-# 5. GENERATE A RANDOM PRE-SHARED KEY
-# ============================================================
+# ------------------------------------------------------------
+# 5. GENERATE A PRE-SHARED KEY (PSK)
+# Run on one gateway only
+# ------------------------------------------------------------
 
-# Generate a strong random Base64-encoded PSK on one gateway.
+# Generate a random pre-shared key.
 openssl rand -base64 33
 
-# Use the same generated PSK on both gateways.
-# Add the 0s prefix before the Base64 value in swanctl.conf.
-# Do not write the actual PSK in this file or upload it to GitHub.
+# Copy the generated key securely to the other gateway.
+# Use the same key on both gateways.
+# Do not include the actual key in screenshots or GitHub.
 
 
-# ============================================================
-# 6. CONFIGURE THE IPsec CONNECTION
-# ============================================================
+# ------------------------------------------------------------
+# 6. CONFIGURE GATEWAY A
+# Run on Gateway A only
+# ------------------------------------------------------------
 
-# Open the strongSwan configuration file on both gateways.
+# Open the strongSwan configuration file.
 sudo nano /etc/swanctl/swanctl.conf
 
-# GATEWAY A CONFIGURATION:
+# Add the following configuration.
+# Replace the PSK placeholder with the generated key.
 #
 # connections {
-#   lab-vpn {
-#     version = 2
-#     local_addrs = 192.168.229.128
-#     remote_addrs = 192.168.229.129
-#     proposals = aes256gcm16-prfsha256-modp3072
-#     local {
-#       auth = psk
-#       id = gw-a
+#     lab-vpn {
+#         version = 2
+#         local_addrs = 192.168.229.128
+#         remote_addrs = 192.168.229.129
+#
+#         proposals = aes256gcm16-prfsha256-modp3072
+#
+#         local {
+#             auth = psk
+#             id = gw-a
+#         }
+#
+#         remote {
+#             auth = psk
+#             id = gw-b
+#         }
+#
+#         children {
+#             lab-net {
+#                 local_ts = 10.10.1.1/32
+#                 remote_ts = 10.20.1.1/32
+#                 esp_proposals = aes256gcm16
+#             }
+#         }
 #     }
-#     remote {
-#       auth = psk
-#       id = gw-b
-#     }
-#     children {
-#       lab-net {
-#         local_ts = 10.10.1.1/32
-#         remote_ts = 10.20.1.1/32
-#         esp_proposals = aes256gcm16
-#       }
-#     }
-#   }
-# }
-# secrets {
-#   ike-lab {
-#     secret = 0sREPLACE_WITH_GENERATED_PSK
-#   }
 # }
 #
-# GATEWAY B CONFIGURATION:
+# secrets {
+#     ike-lab {
+#         id = gw-a
+#         secret = 0sREPLACE_WITH_GENERATED_PSK
+#     }
+# }
+
+
+# ------------------------------------------------------------
+# 7. CONFIGURE GATEWAY B
+# Run on Gateway B only
+# ------------------------------------------------------------
+
+# Open the strongSwan configuration file.
+sudo nano /etc/swanctl/swanctl.conf
+
+# Add the following configuration.
+# Use the same PSK generated earlier.
 #
 # connections {
-#   lab-vpn {
-#     version = 2
-#     local_addrs = 192.168.229.129
-#     remote_addrs = 192.168.229.128
-#     proposals = aes256gcm16-prfsha256-modp3072
-#     local {
-#       auth = psk
-#       id = gw-b
+#     lab-vpn {
+#         version = 2
+#         local_addrs = 192.168.229.129
+#         remote_addrs = 192.168.229.128
+#
+#         proposals = aes256gcm16-prfsha256-modp3072
+#
+#         local {
+#             auth = psk
+#             id = gw-b
+#         }
+#
+#         remote {
+#             auth = psk
+#             id = gw-a
+#         }
+#
+#         children {
+#             lab-net {
+#                 local_ts = 10.20.1.1/32
+#                 remote_ts = 10.10.1.1/32
+#                 esp_proposals = aes256gcm16
+#             }
+#         }
 #     }
-#     remote {
-#       auth = psk
-#       id = gw-a
-#     }
-#     children {
-#       lab-net {
-#         local_ts = 10.20.1.1/32
-#         remote_ts = 10.10.1.1/32
-#         esp_proposals = aes256gcm16
-#       }
-#     }
-#   }
-# }
-# secrets {
-#   ike-lab {
-#     secret = 0sREPLACE_WITH_GENERATED_PSK
-#   }
 # }
 #
-# NOTE:
-# Both gateways must use the same PSK, connection name,
-# CHILD SA name, and cryptographic proposals.
-# Local and remote addresses, identities, and traffic selectors
-# must be reversed between the two gateways.
+# secrets {
+#     ike-lab {
+#         id = gw-b
+#         secret = 0sREPLACE_WITH_GENERATED_PSK
+#     }
+# }
 
 
-# ============================================================
-# 7. LOAD AND VERIFY THE VPN CONFIGURATION
-# ============================================================
+# ------------------------------------------------------------
+# 8. LOAD AND VERIFY CONFIGURATION
+# Run on both gateways
+# ------------------------------------------------------------
 
-# Run on both gateways.
-
-# Restrict access to the configuration file.
+# Set secure permissions for the configuration file.
 sudo chmod 600 /etc/swanctl/swanctl.conf
 
-# Load the configured connections and authentication credentials.
+# Load the configuration.
 sudo swanctl --load-all
 
-# Display the loaded IPsec connections.
+# Display the loaded connections.
 sudo swanctl --list-conns
 
 
-# ============================================================
-# 8. ESTABLISH THE IPsec VPN TUNNEL
-# ============================================================
+# ------------------------------------------------------------
+# 9. ESTABLISH THE IPsec VPN TUNNEL
+# Run on Gateway A
+# ------------------------------------------------------------
 
-# Gateway A: Initiate the CHILD SA to establish the VPN tunnel.
+# Initiate the CHILD SA.
 sudo swanctl --initiate --child lab-net
 
-# Gateway B: Optionally monitor the strongSwan service logs.
+# Monitor strongSwan logs if required.
 sudo journalctl -u strongswan -f
 
-# Check the established IKE SA and CHILD SA on both gateways.
+# Display established IKE and CHILD security associations.
 sudo swanctl --list-sas
 
 
-# ============================================================
-# 9. VERIFY IPsec XFRM STATES AND POLICIES
-# ============================================================
+# ------------------------------------------------------------
+# 10. VERIFY IPsec STATES AND POLICIES
+# Run on both gateways
+# ------------------------------------------------------------
 
-# Display installed IPsec security states.
+# Display IPsec XFRM states.
 sudo ip xfrm state
 
-# Display the installed IPsec security policies.
+# Display IPsec XFRM policies.
 sudo ip xfrm policy
 
 
-# ============================================================
-# 10. TEST PROTECTED COMMUNICATION
-# ============================================================
+# ------------------------------------------------------------
+# 11. TEST PROTECTED COMMUNICATION
+# ------------------------------------------------------------
 
-# Gateway A: Send four ping requests through the IPsec tunnel.
+# Run on Gateway A to ping Gateway B's inner address.
 ping -I 10.10.1.1 -c 4 10.20.1.1
 
-# Gateway B: Send four ping requests in the reverse direction.
+# Run on Gateway B to test communication in the reverse direction.
 ping -I 10.20.1.1 -c 4 10.10.1.1
 
-# Check the IPsec Security Association counters after communication.
+# Display the IPsec traffic counters.
 sudo swanctl --list-sas
 
 
-# ============================================================
-# 11. OPTIONAL PACKET CAPTURE AND ANALYSIS
-# ============================================================
+# ------------------------------------------------------------
+# 12. OPTIONAL: CAPTURE IPsec NETWORK TRAFFIC
+# ------------------------------------------------------------
 
-# Identify the outer network interface on the gateway.
+# Identify the outer network interface.
 ip -br address
 
-# Replace <OUTER_IF> with the actual outer network interface name.
-# Start packet capture on the outer interface.
-sudo tcpdump -ni <OUTER_IF> -w exp9-ipsec.pcap 'udp port 500 or udp port 4500 or proto 50 or proto 51'
+# Replace OUTER_IF with the actual interface name.
+# Capture IKE, NAT-T, ESP and AH traffic.
+sudo tcpdump -ni OUTER_IF -w exp9-ipsec.pcap 'udp port 500 or udp port 4500 or proto 50 or proto 51'
 
 # Stop the capture using Ctrl+C.
-# Open exp9-ipsec.pcap in Wireshark.
 #
 # Wireshark display filter:
 # isakmp || esp || ah
-#
-# UDP 500: IKEv2 negotiation.
-# UDP 4500: NAT traversal traffic, when applicable.
-# ESP (IP protocol 50): Encrypted IPsec traffic.
-# AH (IP protocol 51): Not expected in this ESP-based experiment.
 
 
-# ============================================================
-# 12. CLEANUP AND RESTORE LAB CONFIGURATION
-# ============================================================
+# ------------------------------------------------------------
+# 13. CLEANUP (OPTIONAL)
+# ------------------------------------------------------------
 
-# Terminate the established CHILD SA.
+# Terminate the CHILD SA from Gateway A.
 sudo swanctl --terminate --child lab-net
 
-# Gateway A: Remove the temporary inner tunnel address.
+# Remove the inner address from Gateway A.
 sudo ip address del 10.10.1.1/32 dev lo
 
-# Gateway B: Remove the temporary inner tunnel address.
+# Remove the inner address from Gateway B.
 sudo ip address del 10.20.1.1/32 dev lo
 
-# Remove or securely store any temporary configuration
-# and credential files according to the lab requirements.
+
+# ------------------------------------------------------------
+# END OF EXPERIMENT 9
+# ------------------------------------------------------------
